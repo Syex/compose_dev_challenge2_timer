@@ -111,7 +111,8 @@ private fun TimerView(viewModel: TimerViewModel) {
     val outerCircleTransition = outerCircleTransitionData(timerState.value)
 
     Box(
-        contentAlignment = Alignment.Center
+        contentAlignment = Alignment.Center,
+        modifier = Modifier.fillMaxHeight()
     ) {
 
         OuterCircle(outerCircleTransition)
