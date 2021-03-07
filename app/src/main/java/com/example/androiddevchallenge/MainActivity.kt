@@ -19,10 +19,10 @@ import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.foundation.focusable
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -33,14 +33,11 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.focus.FocusManager
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.inset
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.OffsetMapping
-import androidx.compose.ui.text.input.TextFieldValue
-import androidx.compose.ui.text.input.TransformedText
 import com.example.androiddevchallenge.ui.theme.MyTheme
 
 class MainActivity : AppCompatActivity() {
@@ -57,7 +54,6 @@ class MainActivity : AppCompatActivity() {
     }
 }
 
-// Start building your app here!
 @Composable
 fun MyApp(viewModel: TimerViewModel) {
     Surface(color = MaterialTheme.colors.background) {
@@ -71,18 +67,69 @@ fun MyApp(viewModel: TimerViewModel) {
 
             TimerTextField(viewModel)
 
-            val focusManager = LocalFocusManager.current
+            StartButton(viewModel)
 
-            OutlinedButton(
-                onClick = {
-                    focusManager.clearFocus()
-                    viewModel.onClickStart()
-                },
-                shape = RoundedCornerShape(30)
-            ) {
-                Text(text = "Start")
+            TimerView(viewModel)
+        }
+    }
+}
+
+@Composable
+private fun StartButton(
+    viewModel: TimerViewModel
+) {
+    val focusManager = LocalFocusManager.current
+
+    OutlinedButton(
+        onClick = {
+            focusManager.clearFocus()
+            viewModel.onClickStart()
+        },
+        shape = RoundedCornerShape(30)
+    ) {
+        Text(text = "Start")
+    }
+}
+
+@Composable
+private fun TimerView(viewModel: TimerViewModel) {
+    Box(
+        contentAlignment = Alignment.Center
+    ) {
+        val timerState = viewModel.remainingTimeLiveData.observeAsState()
+
+        val circleRadius = 360f
+        Canvas(modifier = Modifier.height(circleRadius.dp)) {
+            inset(size.width / 2 - circleRadius, size.height / 2 - circleRadius) {
+                drawCircle(
+                    color = Color.Gray,
+                    radius = circleRadius,
+                    style = Stroke(width = 70f)
+                )
+
+                drawArc(
+                    startAngle = 270f,
+                    sweepAngle = 360f * (timerState.value?.progress ?: 0f),
+                    color = Color.Blue,
+                    style = Stroke(width = 70f),
+                    useCenter = false
+                )
             }
         }
+
+        Text(
+            text = timerState.value.run {
+                if (this == null) {
+                    ""
+                } else {
+                    val hours = String.format("%02d", hours)
+                    val minutes = String.format("%02d", minutes)
+                    val seconds = String.format("%02d", seconds)
+                    "$hours:$minutes:$seconds"
+                }
+            },
+            style = MaterialTheme.typography.subtitle1
+        )
     }
 }
 
@@ -103,7 +150,7 @@ fun TimerTextField(viewModel: TimerViewModel) {
         singleLine = true,
         onValueChange = {
             textFieldValue.value = it
-            viewModel.timerValue = it
+            viewModel.timerUserInput = it
         }
     )
 
