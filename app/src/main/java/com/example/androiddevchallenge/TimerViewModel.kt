@@ -13,7 +13,7 @@ import java.util.concurrent.TimeUnit
 
 class TimerViewModel : ViewModel() {
 
-    var timerUserInput = ""
+    private var timerUserInput = ""
 
     private var _remainingTimeLiveData: MutableLiveData<RemainingTimerTime?> = MutableLiveData(null)
     val remainingTimeLiveData: LiveData<RemainingTimerTime?> = _remainingTimeLiveData
@@ -75,6 +75,16 @@ class TimerViewModel : ViewModel() {
     private fun cancelTimer() = viewModelScope.launch {
         timerJob?.cancel()
         isTimerRunning.value = false
+    }
+
+    fun timerChanged(value: String): String {
+        timerUserInput = if(value.length == 2 || value.length == 5) {
+            "$value:"
+        } else {
+            value
+        }
+
+        return timerUserInput
     }
 }
 

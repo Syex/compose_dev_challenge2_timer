@@ -28,6 +28,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -40,6 +41,9 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.inset
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.TextFieldValue
 import com.example.androiddevchallenge.ui.theme.MyTheme
 
 class MainActivity : AppCompatActivity() {
@@ -194,16 +198,24 @@ private fun Title() {
 
 @Composable
 fun TimerTextField(viewModel: TimerViewModel) {
-    val textFieldValue = remember { mutableStateOf("") }
+    val textFieldValue = remember { mutableStateOf(TextFieldValue()) }
     OutlinedTextField(
         value = textFieldValue.value,
         isError = viewModel.timerInputError.observeAsState(false).value,
         label = { Text("hh:mm:ss") },
         singleLine = true,
         onValueChange = {
-            textFieldValue.value = it
-            viewModel.timerUserInput = it
-        }
+            if (it.text.length > 8) return@OutlinedTextField
+
+            val modifiedInput = viewModel.timerChanged(it.text)
+            textFieldValue.value = TextFieldValue(
+                text = modifiedInput,
+                selection = TextRange(modifiedInput.length)
+            )
+        },
+        keyboardOptions = KeyboardOptions(
+            keyboardType = KeyboardType.Number
+        )
     )
 
     Spacer(modifier = Modifier.height(16.dp))
