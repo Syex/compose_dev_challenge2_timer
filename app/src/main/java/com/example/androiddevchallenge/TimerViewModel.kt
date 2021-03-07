@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import java.util.concurrent.TimeUnit
 
@@ -20,9 +21,15 @@ class TimerViewModel : ViewModel() {
     private var _timerInputError = MutableLiveData(false)
     val timerInputError: LiveData<Boolean> = _timerInputError
 
-    var timerJob: Job? = null
+    private var timerJob: Job? = null
+    val isTimerRunning: MutableStateFlow<Boolean> = MutableStateFlow(timerJob != null)
 
     fun onClickStart() {
+        if (isTimerRunning.value) {
+            cancelTimer()
+            return
+        }
+
         val splitTime = timerUserInput.split(":")
         if (splitTime.size < 3) {
             _timerInputError.value = true
@@ -44,8 +51,9 @@ class TimerViewModel : ViewModel() {
     }
 
     private fun startTimer(totalSeconds: Long) {
-        timerJob?.cancel()
+        cancelTimer()
         timerJob = viewModelScope.launch {
+            isTimerRunning.value = true
             while (true) {
                 delay(1000)
 
@@ -58,10 +66,15 @@ class TimerViewModel : ViewModel() {
                         progress = 1f - newTime.toFloat() / totalSeconds
                     )
 
-                    if (newTime == 0L) cancel()
+                    if (newTime == 0L) cancelTimer()
                 }
             }
         }
+    }
+
+    private fun cancelTimer() = viewModelScope.launch {
+        timerJob?.cancel()
+        isTimerRunning.value = false
     }
 }
 

@@ -25,6 +25,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.updateTransition
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
@@ -80,15 +81,23 @@ private fun StartButton(
     viewModel: TimerViewModel
 ) {
     val focusManager = LocalFocusManager.current
+    val isTimerRunning by viewModel.isTimerRunning.collectAsState()
 
     OutlinedButton(
         onClick = {
             focusManager.clearFocus()
             viewModel.onClickStart()
         },
-        shape = RoundedCornerShape(30)
+        shape = RoundedCornerShape(30),
+        colors = if (isTimerRunning) {
+            ButtonDefaults.outlinedButtonColors(
+                backgroundColor = Color.Red
+            )
+        } else {
+            ButtonDefaults.outlinedButtonColors()
+        }
     ) {
-        Text(text = "Start")
+        Text(text = if (isTimerRunning) "Stop" else "Start")
     }
 }
 
