@@ -93,25 +93,27 @@ private fun StartButton(
 
 @Composable
 private fun TimerView(viewModel: TimerViewModel) {
+    val timerState = viewModel.remainingTimeLiveData.observeAsState()
+    val circularTransition = circularTransition(timerState.value)
+
     Box(
         contentAlignment = Alignment.Center
     ) {
-        val timerState = viewModel.remainingTimeLiveData.observeAsState()
 
-        val circleRadius = 360f
+        val circleRadius = 320f
         Canvas(modifier = Modifier.height(circleRadius.dp)) {
             inset(size.width / 2 - circleRadius, size.height / 2 - circleRadius) {
                 drawCircle(
                     color = Color.Gray,
                     radius = circleRadius,
-                    style = Stroke(width = 70f)
+                    style = Stroke(width = 50f)
                 )
 
                 drawArc(
                     startAngle = 270f,
-                    sweepAngle = 360f * (timerState.value?.progress ?: 0f),
+                    sweepAngle = circularTransition.progress,
                     color = Color.Blue,
-                    style = Stroke(width = 70f),
+                    style = Stroke(width = 50f, cap = StrokeCap.Round),
                     useCenter = false
                 )
             }
