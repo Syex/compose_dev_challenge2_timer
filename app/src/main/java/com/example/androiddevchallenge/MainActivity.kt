@@ -19,20 +19,21 @@ import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.updateTransition
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -94,35 +95,20 @@ private fun StartButton(
 @Composable
 private fun TimerView(viewModel: TimerViewModel) {
     val timerState = viewModel.remainingTimeLiveData.observeAsState()
-    val circularTransition = circularTransition(timerState.value)
+    val outerCircleTransition = outerCircleTransitionData(timerState.value)
 
     Box(
         contentAlignment = Alignment.Center
     ) {
 
-        val circleRadius = 320f
-        Canvas(modifier = Modifier.height(circleRadius.dp)) {
-            inset(size.width / 2 - circleRadius, size.height / 2 - circleRadius) {
-                drawCircle(
-                    color = Color.Gray,
-                    radius = circleRadius,
-                    style = Stroke(width = 50f)
-                )
+        OuterCircle(outerCircleTransition)
 
-                drawArc(
-                    startAngle = 270f,
-                    sweepAngle = circularTransition.progress,
-                    color = Color.Blue,
-                    style = Stroke(width = 50f, cap = StrokeCap.Round),
-                    useCenter = false
-                )
-            }
-        }
+        InnerCircle(timerState)
 
         Text(
             text = timerState.value.run {
                 if (this == null) {
-                    ""
+                    "00:00:00"
                 } else {
                     val hours = String.format("%02d", hours)
                     val minutes = String.format("%02d", minutes)
@@ -132,6 +118,61 @@ private fun TimerView(viewModel: TimerViewModel) {
             },
             style = MaterialTheme.typography.subtitle1
         )
+    }
+}
+
+@Composable
+private fun OuterCircle(outerCircleTransition: OuterCircularTransition) {
+    val circleRadius = 320f
+    Canvas(modifier = Modifier.height(circleRadius.dp)) {
+        inset(size.width / 2 - circleRadius, size.height / 2 - circleRadius) {
+            drawCircle(
+                color = Color.Gray,
+                radius = circleRadius,
+                style = Stroke(width = 50f)
+            )
+
+            drawArc(
+                startAngle = 270f,
+                sweepAngle = outerCircleTransition.progress,
+                color = Color.Blue,
+                style = Stroke(width = 50f, cap = StrokeCap.Round),
+                useCenter = false
+            )
+        }
+    }
+}
+
+@Composable
+private fun InnerCircle(timerState: State<RemainingTimerTime?>) {
+    val innerCircleRadius = 280f
+    val remainingSeconds = timerState.value?.timeInSeconds ?: 0
+    val arcAngle by animateFloatAsState(
+        targetValue = if (remainingSeconds % 2 == 0L) {
+            0f
+        } else {
+            360f
+        },
+        animationSpec = tween(1000)
+    )
+    val arcColor by animateColorAsState(
+        targetValue = if (remainingSeconds % 2 == 0L) {
+            Color.Transparent
+        } else {
+            Color.Cyan
+        },
+        animationSpec = tween(1000)
+    )
+    Canvas(modifier = Modifier.height(innerCircleRadius.dp)) {
+        inset(size.width / 2 - innerCircleRadius, size.height / 2 - innerCircleRadius) {
+            drawArc(
+                startAngle = 270f,
+                sweepAngle = arcAngle,
+                color = arcColor,
+                style = Stroke(width = 40f, cap = StrokeCap.Round),
+                useCenter = false
+            )
+        }
     }
 }
 
